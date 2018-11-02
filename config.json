@@ -1,0 +1,6 @@
+{
+    "mongodb_listen": 27017,
+    "database_name": "blog",
+
+    "log_file": ""
+}
