@@ -1,6 +1,9 @@
 {
+    "mongodb_host": "localhost",
     "mongodb_listen": 27017,
-    "database_name": "blog",
+    "db_user": "",
+    "db_user_password": "",
+    "database_name": "",
 
     "log_file": ""
 }
