@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	"github.com/jaaaaason/hmblog/configer"
+	"github.com/jaaaaason/hmblog/database"
 	"github.com/jaaaaason/hmblog/logger"
 )
 
@@ -29,5 +30,11 @@ func main() {
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
+	}
+
+	// initialize the database's connection
+	err = database.Initialize()
+	if err != nil {
+		logger.Fatal(err.Error())
 	}
 }
