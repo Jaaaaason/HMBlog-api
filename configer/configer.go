@@ -8,9 +8,12 @@ import (
 
 // Configer the configuration struct
 type Configer struct {
-	MongoDBListen int    `json:"mongodb_listen"`
-	DBName        string `json:"database_name"`
-	LogFile       string `json:"log_file"`
+	MongoDBHost    string `json:"mongodb_host"`
+	MongoDBListen  int    `json:"mongodb_listen"`
+	DBUser         string `json:"db_user"`
+	DBUserPassword string `json:"db_user_password"`
+	DBName         string `json:"database_name"`
+	LogFile        string `json:"log_file"`
 }
 
 // Config the global config
