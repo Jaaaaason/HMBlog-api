@@ -2,9 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/jaaaaason/hmblog/configer"
 	"github.com/jaaaaason/hmblog/database"
+	"github.com/jaaaaason/hmblog/handler"
 	"github.com/jaaaaason/hmblog/logger"
 )
 
@@ -37,4 +41,23 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
+
+	r := gin.Default()
+	registerRoute(r)
+
+	var addr string
+	if configer.Config.Listen > 0 {
+		// use given port in config file
+		addr = fmt.Sprintf(":%d", configer.Config.Listen)
+	} else {
+		// use default port 8080
+		addr = ":8080"
+	}
+
+	r.Run(addr)
+}
+
+// registerRoute registers api route
+func registerRoute(r *gin.Engine) {
+	r.POST("/admin/login", handler.PostLogin)
 }
