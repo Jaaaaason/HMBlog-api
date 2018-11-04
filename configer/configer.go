@@ -13,6 +13,7 @@ type Configer struct {
 	DBUser         string `json:"db_user"`
 	DBUserPassword string `json:"db_user_password"`
 	DBName         string `json:"database_name"`
+	Listen         int    `json:"listen"`
 	LogFile        string `json:"log_file"`
 }
 
