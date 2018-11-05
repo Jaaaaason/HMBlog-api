@@ -13,7 +13,7 @@ import (
 
 // GetCategories handle GET request for url path "/categories"
 func GetCategories(c *gin.Context) {
-	categroies, err := database.Categories(nil)
+	categories, err := database.Categories(nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
@@ -22,7 +22,42 @@ func GetCategories(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, categroies)
+	c.JSON(http.StatusOK, categories)
+}
+
+// GetCategory handle GET request for url path "/categories/:id"
+func GetCategory(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	categories, err := database.Categories(map[string]interface{}{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "No category found with id " + c.Param("id"),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, categories[0])
 }
 
 // PostCategory handles POST request for url path "/admin/categories"
@@ -46,6 +81,7 @@ func PostCategory(c *gin.Context) {
 		return
 	}
 
+	category.BlogCount = 0
 	c.JSON(http.StatusCreated, category)
 }
 
@@ -67,18 +103,17 @@ func UpdateCategory(c *gin.Context) {
 		"_id": oid,
 	})
 	if err != nil {
-		// category with given object id is not exist
-		if err == database.ErrNoCategory {
-			c.JSON(http.StatusNotFound, errRes{
-				Status:  http.StatusNotFound,
-				Message: "No category found with id " + c.Param("id"),
-			})
-			return
-		}
-
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
 			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "No category found with id " + c.Param("id"),
 		})
 		return
 	}

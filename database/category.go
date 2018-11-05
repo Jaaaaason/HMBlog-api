@@ -12,11 +12,8 @@ import (
 // ErrNoCategory returned when no category found
 var ErrNoCategory = errors.New("no such category")
 
-// Categories returns all categories which match the filter,
-// ErrNoCategory are returned only when filter is no empty and
-// no category matches the filter
+// Categories returns all categories which match the filter
 func Categories(filter map[string]interface{}) ([]structure.Category, error) {
-
 	var categories []structure.Category
 
 	session := mgoSession.Copy()
@@ -40,14 +37,8 @@ func Categories(filter map[string]interface{}) ([]structure.Category, error) {
 	}
 
 	err := c.Pipe(pipeline).All(&categories)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			return nil, ErrNoCategory
-		}
-		return nil, err
-	}
 
-	return categories, nil
+	return categories, err
 }
 
 // InsertCategory inserts a category
