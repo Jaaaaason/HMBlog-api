@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"net/http"
 	"time"
 
@@ -26,7 +25,7 @@ func PostLogin(c *gin.Context) {
 	}
 
 	// check if user exists
-	user, err := database.User(context.Background(), map[string]interface{}{
+	user, err := database.User(map[string]interface{}{
 		"username": login.Username,
 	})
 	if err != nil {

@@ -1,25 +1,21 @@
 package database
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
-	"github.com/jaaaaason/hmblog/configer"
+	"github.com/globalsign/mgo"
 
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/jaaaaason/hmblog/configer"
 )
 
-// connectURI the connection uri for mongodb
-var connectURI string
+var mgoSession *mgo.Session // original mgo session
 var dbName = "blog"
 
 // Initialize initializes the connection uri
 // and test the connection
 func Initialize() error {
-	connectURI = fmt.Sprintf("mongodb://%s:%s@%s:%d",
-		configer.Config.DBUser,
-		configer.Config.DBUserPassword,
+	connectURI := fmt.Sprintf("mongodb://%s:%d",
 		configer.Config.MongoDBHost,
 		configer.Config.MongoDBListen,
 	)
@@ -30,10 +26,16 @@ func Initialize() error {
 	}
 
 	// test connection
-	_, err := mongo.Connect(context.Background(), connectURI, nil)
+	var err error
+	mgoSession, err = mgo.Dial(connectURI)
 	if err != nil {
 		return err
 	}
 
 	return initBlogUser()
+}
+
+// CloseSession closes the original mgo session "mgoSession"
+func CloseSession() {
+	mgoSession.Close()
 }
