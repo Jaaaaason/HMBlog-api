@@ -41,9 +41,14 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
+	defer database.CloseSession()
 
 	r := gin.Default()
 	registerRoute(r)
+
+	adminRouter := r.Group("/admin")
+	adminRouter.Use(handler.JWTMiddleware())
+	registerAdminRoute(adminRouter)
 
 	var addr string
 	if configer.Config.Listen > 0 {
@@ -60,4 +65,12 @@ func main() {
 // registerRoute registers api route
 func registerRoute(r *gin.Engine) {
 	r.POST("/admin/login", handler.PostLogin)
+
+	r.GET("/categories", handler.GetCategories)
+}
+
+func registerAdminRoute(r *gin.RouterGroup) {
+	r.POST("/categories", handler.PostCategory)
+	r.PUT("/categories/:id", handler.UpdateCategory)
+	r.PATCH("/categories/:id", handler.UpdateCategory)
 }
