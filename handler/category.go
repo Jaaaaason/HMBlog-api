@@ -169,5 +169,6 @@ func UpdateCategory(c *gin.Context) {
 	}
 
 	category.ID = oid
+	category.BlogCount = categories[0].BlogCount
 	c.JSON(http.StatusCreated, category)
 }
