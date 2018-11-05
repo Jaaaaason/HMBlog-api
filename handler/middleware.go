@@ -37,19 +37,29 @@ func JWTMiddleware() gin.HandlerFunc {
 				return []byte(jwtSignKey), nil
 			})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, errRes{
-				Status:  http.StatusInternalServerError,
-				Message: "Internal server error",
-			})
+			v, _ := err.(*jwt.ValidationError)
+			if v.Errors == jwt.ValidationErrorExpired {
+				// jwt token is expired
+				c.JSON(http.StatusUnauthorized, errRes{
+					Status:  http.StatusUnauthorized,
+					Message: "JWT token is expired",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, errRes{
+					Status:  http.StatusInternalServerError,
+					Message: "Internal server error",
+				})
+			}
 
 			c.Abort()
 			return
 		}
 
+		// invalid token
 		if !token.Valid {
 			c.JSON(http.StatusUnauthorized, errRes{
 				Status:  http.StatusUnauthorized,
-				Message: "Invaild JWT token",
+				Message: "Invalid JWT token",
 			})
 
 			c.Abort()
