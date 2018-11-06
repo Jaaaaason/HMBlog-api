@@ -70,15 +70,15 @@ func randomPassword() []byte {
 var ErrNoUser = errors.New("no such user")
 
 // User returns one user that match the filter
-func User(filter map[string]interface{}) (*structure.User, error) {
-	user := new(structure.User)
+func User(filter map[string]interface{}) (structure.User, error) {
+	var user structure.User
 
 	session := mgoSession.Copy()
 	defer session.Close()
 
 	c := session.DB(dbName).C("users")
 
-	err := c.Find(filter).One(user)
+	err := c.Find(filter).One(&user)
 	if err != nil && err == mgo.ErrNotFound {
 		return user, ErrNoUser
 	}
