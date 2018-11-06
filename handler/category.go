@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"gopkg.in/go-playground/validator.v8"
@@ -151,8 +152,13 @@ func UpdateCategory(c *gin.Context) {
 		}
 	}
 
+	// set field ID and BlogCount empty value to omit it
+	category.ID = nil
+	category.BlogCount = 0
+
 	err = database.UpdateCategory(oid, &category)
 	if err != nil {
+		fmt.Println(err)
 		if err == database.ErrNoCategory {
 			c.JSON(http.StatusNotFound, errRes{
 				Status:  http.StatusNotFound,
@@ -168,7 +174,7 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	category.ID = oid
+	category.ID = &oid
 	category.BlogCount = categories[0].BlogCount
 	c.JSON(http.StatusCreated, category)
 }
