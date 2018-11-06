@@ -55,10 +55,12 @@ func PostLogin(c *gin.Context) {
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
-	token.Claims = jwt.MapClaims{
+	claims := jwt.MapClaims{
 		"exp": time.Now().Add(time.Second * tokenExp).Unix(),
 		"iat": time.Now().Unix(),
 	}
+	claims["user_id"] = user.ID
+	token.Claims = claims
 
 	tokenString, err := token.SignedString([]byte(jwtSignKey))
 	if err != nil {
