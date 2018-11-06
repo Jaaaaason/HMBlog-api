@@ -74,7 +74,7 @@ func User(filter map[string]interface{}) (*structure.User, error) {
 	user := new(structure.User)
 
 	session := mgoSession.Copy()
-	session.Close()
+	defer session.Close()
 
 	c := session.DB(dbName).C("users")
 
