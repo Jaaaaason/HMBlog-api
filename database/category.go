@@ -42,24 +42,15 @@ func Categories(filter map[string]interface{}) ([]structure.Category, error) {
 }
 
 // InsertCategory inserts a category
-func InsertCategory(category *structure.Category) (*bson.ObjectId, error) {
-	id := bson.NewObjectId()
-
+func InsertCategory(category *structure.Category) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 
 	c := session.DB(dbName).C("categories")
 
-	err := c.Insert(bson.M{
-		"_id":      id,
-		"name":     category.Name,
-		"blog_ids": []bson.ObjectId{},
-	})
-	if err != nil {
-		return &id, err
-	}
+	*category.ID = bson.NewObjectId()
 
-	return &id, nil
+	return c.Insert(category)
 }
 
 // UpdateCategory updates a exists category with given category,

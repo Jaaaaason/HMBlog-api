@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"gopkg.in/go-playground/validator.v8"
@@ -72,8 +71,7 @@ func PostCategory(c *gin.Context) {
 		return
 	}
 
-	var err error
-	category.ID, err = database.InsertCategory(category)
+	err := database.InsertCategory(category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
@@ -158,15 +156,6 @@ func UpdateCategory(c *gin.Context) {
 
 	err = database.UpdateCategory(oid, &category)
 	if err != nil {
-		fmt.Println(err)
-		if err == database.ErrNoCategory {
-			c.JSON(http.StatusNotFound, errRes{
-				Status:  http.StatusNotFound,
-				Message: "No category found with id " + c.Param("id"),
-			})
-			return
-		}
-
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
 			Message: "Internal server error",
