@@ -13,7 +13,7 @@ import (
 var ErrNoCategory = errors.New("no such category")
 
 // Categories returns all categories which match the filter
-func Categories(filter map[string]interface{}) ([]structure.Category, error) {
+func Categories(filter bson.M) ([]structure.Category, error) {
 	var categories []structure.Category
 
 	session := mgoSession.Copy()
@@ -29,9 +29,6 @@ func Categories(filter map[string]interface{}) ([]structure.Category, error) {
 			"$project": bson.M{
 				"_id":  1,
 				"name": 1,
-				"blog_count": bson.M{
-					"$size": "$blog_ids",
-				},
 			},
 		},
 	}
@@ -48,6 +45,7 @@ func InsertCategory(category *structure.Category) error {
 
 	c := session.DB(dbName).C("categories")
 
+	category.ID = new(bson.ObjectId)
 	*category.ID = bson.NewObjectId()
 
 	return c.Insert(category)
@@ -55,7 +53,7 @@ func InsertCategory(category *structure.Category) error {
 
 // UpdateCategory updates a exists category with given category,
 // ErrNoCategory returned when destination category doesn't exist
-func UpdateCategory(id bson.ObjectId, category *structure.Category) error {
+func UpdateCategory(id bson.ObjectId, category structure.Category) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 

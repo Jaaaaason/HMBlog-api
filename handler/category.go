@@ -38,7 +38,7 @@ func GetCategory(c *gin.Context) {
 
 	oid := bson.ObjectIdHex(c.Param("id"))
 
-	categories, err := database.Categories(map[string]interface{}{
+	categories, err := database.Categories(bson.M{
 		"_id": oid,
 	})
 	if err != nil {
@@ -80,7 +80,6 @@ func PostCategory(c *gin.Context) {
 		return
 	}
 
-	category.BlogCount = 0
 	c.JSON(http.StatusCreated, category)
 }
 
@@ -98,7 +97,7 @@ func UpdateCategory(c *gin.Context) {
 
 	oid := bson.ObjectIdHex(c.Param("id"))
 
-	categories, err := database.Categories(map[string]interface{}{
+	categories, err := database.Categories(bson.M{
 		"_id": oid,
 	})
 	if err != nil {
@@ -150,11 +149,10 @@ func UpdateCategory(c *gin.Context) {
 		}
 	}
 
-	// set field ID and BlogCount empty value to omit it
+	// set field ID empty value to omit it
 	category.ID = nil
-	category.BlogCount = 0
 
-	err = database.UpdateCategory(oid, &category)
+	err = database.UpdateCategory(oid, category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
@@ -164,6 +162,5 @@ func UpdateCategory(c *gin.Context) {
 	}
 
 	category.ID = &oid
-	category.BlogCount = categories[0].BlogCount
 	c.JSON(http.StatusCreated, category)
 }

@@ -6,5 +6,5 @@ import "github.com/globalsign/mgo/bson"
 type Category struct {
 	ID        *bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Name      string         `json:"name" bson:"name" binding:"required"`
-	BlogCount int            `json:"blog_count" bson:"blog_count,omitempty"`
+	PostCount int            `json:"post_count" bson:"-"`
 }
