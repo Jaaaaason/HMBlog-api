@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"gopkg.in/go-playground/validator.v8"
 
@@ -101,7 +102,38 @@ func PostCategory(c *gin.Context) {
 		return
 	}
 
-	err := database.InsertCategory(category)
+	// trim space
+	category.Name = strings.TrimSpace(category.Name)
+	if category.Name == "" {
+		// empty category name
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Category name shouldn't be just some whitespace",
+		})
+		return
+	}
+
+	categories, err := database.Categories(bson.M{
+		"name": category.Name,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) > 0 {
+		// category name exists
+		c.JSON(http.StatusConflict, errRes{
+			Status:  http.StatusConflict,
+			Message: "Category name already exists",
+		})
+		return
+	}
+
+	err = database.InsertCategory(category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
@@ -181,6 +213,36 @@ func UpdateCategory(c *gin.Context) {
 
 	// set field ID empty value to omit it
 	category.ID = nil
+
+	// trim space
+	category.Name = strings.TrimSpace(category.Name)
+	if category.Name == "" {
+		// empty category name
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Category name shouldn't be just some whitespace",
+		})
+		return
+	}
+
+	categories, err = database.Categories(bson.M{
+		"name": category.Name,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+	if len(categories) > 0 && *categories[0].ID != oid {
+		// category name exists
+		c.JSON(http.StatusConflict, errRes{
+			Status:  http.StatusConflict,
+			Message: "Category name already exists",
+		})
+		return
+	}
 
 	err = database.UpdateCategory(oid, category)
 	if err != nil {
