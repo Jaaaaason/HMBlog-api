@@ -1,0 +1,10 @@
+{
+    "mongodb_host": "localhost",
+    "mongodb_listen": 27017,
+    "db_user": "",
+    "db_user_password": "",
+    "database_name": "",
+
+    "listen": 8080,
+    "log_file": ""
+}
