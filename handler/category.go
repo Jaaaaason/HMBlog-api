@@ -12,7 +12,7 @@ import (
 	"github.com/jaaaaason/hmblog/structure"
 )
 
-// GetCategories handle GET request for url path "/categories"
+// GetCategories handles GET request for url path "/categories"
 func GetCategories(c *gin.Context) {
 	categories, err := database.Categories(nil)
 	if err != nil {
@@ -42,7 +42,7 @@ func GetCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, categories)
 }
 
-// GetCategory handle GET request for url path "/categories/:id"
+// GetCategory handles GET request for url path "/categories/:id"
 func GetCategory(c *gin.Context) {
 	// parse object id from url path
 	if !bson.IsObjectIdHex(c.Param("id")) {
@@ -78,6 +78,127 @@ func GetCategory(c *gin.Context) {
 		bson.M{
 			"category_id": categories[0].ID,
 			"is_publish":  true,
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, categories[0])
+}
+
+// GetAdminCategories handles GET request for url path "/admin/categories"
+func GetAdminCategories(c *gin.Context) {
+	categories, err := database.Categories(nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	userID := bson.ObjectIdHex(idStr.(string))
+
+	for i := range categories {
+		// count published post or
+		// unpublish post that belongs to current user
+		categories[i].PostCount, err = database.PostCount(
+			bson.M{
+				"$or": []bson.M{
+					bson.M{
+						"category_id": categories[i].ID,
+						"is_publish":  true,
+					},
+					bson.M{
+						"category_id": categories[i].ID,
+						"is_publish":  false,
+						"user_id":     userID,
+					},
+				},
+			},
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, errRes{
+				Status:  http.StatusInternalServerError,
+				Message: "Internal server error",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, categories)
+}
+
+// GetAdminCategory handles GET request for url path "/admin/categories/:id"
+func GetAdminCategory(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	userID := bson.ObjectIdHex(idStr.(string))
+
+	categories, err := database.Categories(bson.M{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "No category found with id " + c.Param("id"),
+		})
+		return
+	}
+
+	// count published post or
+	// unpublish post that belongs to current user
+	categories[0].PostCount, err = database.PostCount(
+		bson.M{
+			"$or": []bson.M{
+				bson.M{
+					"category_id": categories[0].ID,
+					"is_publish":  true,
+				},
+				bson.M{
+					"category_id": categories[0].ID,
+					"is_publish":  false,
+					"user_id":     userID,
+				},
+			},
 		},
 	)
 	if err != nil {

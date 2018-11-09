@@ -72,6 +72,8 @@ func registerRoute(r *gin.Engine) {
 
 // registerAdminRoute registers admin api route
 func registerAdminRoute(r *gin.RouterGroup) {
+	r.GET("/categories", handler.GetAdminCategories)
+	r.GET("/categories/:id", handler.GetAdminCategory)
 	r.POST("/categories", handler.PostCategory)
 	r.PUT("/categories/:id", handler.UpdateCategory)
 	r.PATCH("/categories/:id", handler.UpdateCategory)
