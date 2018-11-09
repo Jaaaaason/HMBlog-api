@@ -22,6 +22,22 @@ func GetCategories(c *gin.Context) {
 		return
 	}
 
+	for i := range categories {
+		categories[i].PostCount, err = database.PostCount(
+			bson.M{
+				"category_id": categories[i].ID,
+				"is_publish":  true,
+			},
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, errRes{
+				Status:  http.StatusInternalServerError,
+				Message: "Internal server error",
+			})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, categories)
 }
 
@@ -53,6 +69,20 @@ func GetCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errRes{
 			Status:  http.StatusBadRequest,
 			Message: "No category found with id " + c.Param("id"),
+		})
+		return
+	}
+
+	categories[0].PostCount, err = database.PostCount(
+		bson.M{
+			"category_id": categories[0].ID,
+			"is_publish":  true,
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
 		})
 		return
 	}
