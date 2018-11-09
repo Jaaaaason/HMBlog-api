@@ -56,7 +56,7 @@ func JWTMiddleware() gin.HandlerFunc {
 		}
 
 		// invalid token
-		if !token.Valid {
+		if claims, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
 			c.JSON(http.StatusUnauthorized, errRes{
 				Status:  http.StatusUnauthorized,
 				Message: "Invalid JWT token",
@@ -64,6 +64,8 @@ func JWTMiddleware() gin.HandlerFunc {
 
 			c.Abort()
 			return
+		} else {
+			c.Set("user_id", claims["user_id"])
 		}
 
 		c.Next()

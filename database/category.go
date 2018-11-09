@@ -45,7 +45,9 @@ func InsertCategory(category *structure.Category) error {
 
 	c := session.DB(dbName).C("categories")
 
-	category.ID = new(bson.ObjectId)
+	if category.ID == nil {
+		category.ID = new(bson.ObjectId)
+	}
 	*category.ID = bson.NewObjectId()
 
 	return c.Insert(category)
