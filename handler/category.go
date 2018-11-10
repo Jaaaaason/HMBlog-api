@@ -67,9 +67,9 @@ func GetCategory(c *gin.Context) {
 	}
 
 	if len(categories) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
-			Message: "No category found with id " + c.Param("id"),
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
 		})
 		return
 	}
@@ -177,9 +177,9 @@ func GetAdminCategory(c *gin.Context) {
 	}
 
 	if len(categories) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
-			Message: "No category found with id " + c.Param("id"),
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
 		})
 		return
 	}
@@ -292,9 +292,9 @@ func UpdateCategory(c *gin.Context) {
 	}
 
 	if len(categories) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
-			Message: "No category found with id " + c.Param("id"),
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
 		})
 		return
 	}
