@@ -19,7 +19,7 @@ func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
-			c.JSON(http.StatusBadRequest, errRes{
+			c.JSON(http.StatusUnauthorized, errRes{
 				Status:  http.StatusUnauthorized,
 				Message: "JWT token required",
 			})
