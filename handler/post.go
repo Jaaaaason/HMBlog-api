@@ -9,6 +9,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/jaaaaason/hmblog/database"
 	"github.com/jaaaaason/hmblog/structure"
+	validator "gopkg.in/go-playground/validator.v8"
 )
 
 // GetPosts handles the GET request of url path "/posts"
@@ -242,7 +243,7 @@ func GetAdminPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, posts)
 }
 
-//
+// GetAdminPost handles the GET request of url path "/admin/posts/:id"
 func GetAdminPost(c *gin.Context) {
 	// parse object id from url path
 	if !bson.IsObjectIdHex(c.Param("id")) {
@@ -470,6 +471,229 @@ func PostPost(c *gin.Context) {
 	post.User = new(structure.User)
 	*post.User, _ = database.User(bson.M{
 		"_id": post.UserID,
+	})
+
+	c.JSON(http.StatusCreated, post)
+}
+
+// UpdatePost handles PUT request and PATCH request
+// or url path "/admin/posts/:id"
+func UpdatePost(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	// get user id
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	userID := bson.ObjectIdHex(idStr.(string))
+
+	posts, err := database.Posts(bson.M{
+		"_id":     oid,
+		"user_id": userID,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(posts) < 1 {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "No post found",
+		})
+		return
+	}
+
+	var post structure.Post
+	if c.Request.Method == "PUT" {
+		// for PUT request, use a new category struct,
+		// binding with the request body, so the category
+		// will be exactly the same as request body,
+		// the value of some field that doesn't will be empty
+		err = c.ShouldBindJSON(&post)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, errRes{
+				Status:  http.StatusBadRequest,
+				Message: "Bad request",
+			})
+			return
+		}
+	} else if c.Request.Method == "PATCH" {
+		// for PATCH request, use the origin category just got before,
+		// binding with request body, so the value of some field that
+		// doesn't provide will not change
+		post = posts[0]
+		err = c.ShouldBindJSON(&post)
+		if err != nil {
+			_, ok := err.(validator.ValidationErrors)
+			if !ok {
+				c.JSON(http.StatusBadRequest, errRes{
+					Status:  http.StatusBadRequest,
+					Message: "Bad request",
+				})
+				return
+			}
+		}
+	}
+
+	post.CategoryName = strings.TrimSpace(post.CategoryName)
+	if post.CategoryName != posts[0].CategoryName {
+		// category changes
+		if post.CategoryName != "" {
+			categories, err := database.Categories(bson.M{
+				"name": post.CategoryName,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errRes{
+					Status:  http.StatusInternalServerError,
+					Message: "Internal server error",
+				})
+				return
+			}
+
+			if len(categories) > 0 {
+				post.CategoryID = categories[0].ID
+				categories[0].PostCount, _ = database.PostCount(bson.M{
+					"$or": []bson.M{
+						bson.M{
+							"category_id": categories[0].ID,
+							"is_publish":  true,
+						},
+						bson.M{
+							"category_id": categories[0].ID,
+							"is_publish":  false,
+							"user_id":     userID,
+						},
+					},
+				})
+				categories[0].PostCount++
+				post.Category = &categories[0]
+			} else {
+				category := structure.Category{
+					Name: post.CategoryName,
+				}
+				err = database.InsertCategory(&category)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, errRes{
+						Status:  http.StatusInternalServerError,
+						Message: "Internal server error",
+					})
+					return
+				}
+
+				post.CategoryID = category.ID
+				post.Category = &category
+				post.Category.PostCount = 1
+			}
+		}
+	} else {
+		if posts[0].CategoryID != nil {
+			// retrieve category
+			categories, err := database.Categories(bson.M{
+				"_id": posts[0].CategoryID,
+			})
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, errRes{
+					Status:  http.StatusInternalServerError,
+					Message: "Internal server error",
+				})
+				return
+			}
+			if len(categories) > 0 {
+				categories[0].PostCount, _ = database.PostCount(bson.M{
+					"$or": []bson.M{
+						bson.M{
+							"category_id": posts[0].CategoryID,
+							"is_publish":  true,
+						},
+						bson.M{
+							"category_id": posts[0].CategoryID,
+							"is_publish":  false,
+							"user_id":     userID,
+						},
+					},
+				})
+				posts[0].Category = &categories[0]
+			}
+
+			post.CategoryID = posts[0].CategoryID
+			post.Category = posts[0].Category
+		}
+	}
+
+	// set field ID and CategoryNam zero value to omit it
+	post.ID = nil
+	post.CategoryName = ""
+
+	post.CreatedAt = posts[0].CreatedAt
+	post.UpdatedAt = time.Now()
+
+	// trim space
+	post.Title = strings.TrimSpace(post.Title)
+	if post.Title == "" {
+		// empty category name
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "title shouldn't be just some whitespace",
+		})
+		return
+	}
+
+	posts, err = database.Posts(bson.M{
+		"title": post.Title,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+	if len(posts) > 0 && *posts[0].ID != oid {
+		// post with this title exists
+		c.JSON(http.StatusConflict, errRes{
+			Status:  http.StatusConflict,
+			Message: "Post with this title already exists",
+		})
+		return
+	}
+
+	err = database.UpdatePost(
+		bson.M{
+			"_id": oid,
+		},
+		post,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	post.ID = &oid
+
+	// retrieve user
+	post.User = new(structure.User)
+	*post.User, _ = database.User(bson.M{
+		"_id": userID,
 	})
 
 	c.JSON(http.StatusCreated, post)
