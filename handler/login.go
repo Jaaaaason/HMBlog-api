@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/globalsign/mgo/bson"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -25,7 +26,7 @@ func PostLogin(c *gin.Context) {
 	}
 
 	// check if user exists
-	user, err := database.User(map[string]interface{}{
+	user, err := database.User(bson.M{
 		"username": login.Username,
 	})
 	if err != nil {
