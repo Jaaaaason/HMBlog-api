@@ -7,10 +7,12 @@ import (
 	"github.com/jaaaaason/hmblog/configer"
 )
 
-var infoLog *log.Logger
-var warnLog *log.Logger
-var errLog *log.Logger
-var fatalLog *log.Logger
+var (
+	infoLog  *log.Logger
+	warnLog  *log.Logger
+	errLog   *log.Logger
+	fatalLog *log.Logger
+)
 
 func init() {
 	infoLog = log.New(os.Stdout, "[Info] ", log.Ldate|log.Ltime)
