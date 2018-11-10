@@ -27,3 +27,18 @@ func Posts(filter bson.M) ([]structure.Post, error) {
 
 	return posts, err
 }
+
+// InsertPost inserts a post to database
+func InsertPost(post *structure.Post) error {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	c := session.DB(dbName).C("posts")
+
+	if post.ID == nil {
+		post.ID = new(bson.ObjectId)
+	}
+	*post.ID = bson.NewObjectId()
+
+	return c.Insert(post)
+}

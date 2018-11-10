@@ -87,4 +87,5 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	// admin post
 	r.GET("/posts", handler.GetAdminPosts)
 	r.GET("/posts/:id", handler.GetAdminPost)
+	r.POST("/posts", handler.PostPost)
 }
