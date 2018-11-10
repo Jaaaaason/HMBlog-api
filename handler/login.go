@@ -32,8 +32,8 @@ func PostLogin(c *gin.Context) {
 	if err != nil {
 		// user not exist
 		if err == database.ErrNoUser {
-			c.JSON(http.StatusBadRequest, errRes{
-				Status:  http.StatusBadRequest,
+			c.JSON(http.StatusNotFound, errRes{
+				Status:  http.StatusNotFound,
 				Message: "No user named " + login.Username,
 			})
 			return
