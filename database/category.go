@@ -53,29 +53,34 @@ func InsertCategory(category *structure.Category) error {
 	return c.Insert(category)
 }
 
-// UpdateCategory updates a exists category with given category,
+// UpdateCategories updates all categories that matches the filter,
 // ErrNoCategory returned when destination category doesn't exist
-func UpdateCategory(id bson.ObjectId, category structure.Category) error {
+func UpdateCategories(filter bson.M, category structure.Category) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 
 	c := session.DB(dbName).C("categories")
 
-	err := c.Update(
-		bson.M{
-			"_id": id,
-		},
+	_, err := c.UpdateAll(
+		filter,
 		bson.M{
 			"$set": category,
 		},
 	)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			return ErrNoCategory
-		}
-
-		return err
+	if err != nil && err == mgo.ErrNotFound {
+		return ErrNoCategory
 	}
 
-	return nil
+	return err
+}
+
+// RemoveCategories removes all categories that matches the filter
+func RemoveCategories(filter bson.M) error {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	c := session.DB(dbName).C("categories")
+
+	_, err := c.RemoveAll(filter)
+	return err
 }

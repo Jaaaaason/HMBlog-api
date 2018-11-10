@@ -49,14 +49,14 @@ func InsertPost(post *structure.Post) error {
 // ErrNoPost returned when no category found
 var ErrNoPost = errors.New("no such post")
 
-// UpdatePost updates a exist post
-func UpdatePost(filter bson.M, post structure.Post) error {
+// UpdatePosts updates all posts that matches the filter
+func UpdatePosts(filter bson.M, post structure.Post) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 
 	c := session.DB(dbName).C("posts")
 
-	err := c.Update(
+	_, err := c.UpdateAll(
 		filter,
 		bson.M{
 			"$set": post,
@@ -66,5 +66,16 @@ func UpdatePost(filter bson.M, post structure.Post) error {
 		return ErrNoPost
 	}
 
+	return err
+}
+
+// RemovePosts removes all posts that matches the filter
+func RemovePosts(filter bson.M) error {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	c := session.DB(dbName).C("posts")
+
+	_, err := c.RemoveAll(filter)
 	return err
 }

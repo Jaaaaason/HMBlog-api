@@ -674,7 +674,7 @@ func UpdatePost(c *gin.Context) {
 		return
 	}
 
-	err = database.UpdatePost(
+	err = database.UpdatePosts(
 		bson.M{
 			"_id": oid,
 		},
@@ -697,4 +697,42 @@ func UpdatePost(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusCreated, post)
+}
+
+// DeletePost handles the DELETE request of url path "/admin/posts/:id"
+func DeletePost(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	// get user id
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	userID := bson.ObjectIdHex(idStr.(string))
+
+	err := database.RemovePosts(bson.M{
+		"_id":     oid,
+		"user_id": userID,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

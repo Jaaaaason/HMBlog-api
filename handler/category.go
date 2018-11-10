@@ -365,7 +365,12 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	err = database.UpdateCategory(oid, category)
+	err = database.UpdateCategories(
+		bson.M{
+			"_id": oid,
+		},
+		category,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errRes{
 			Status:  http.StatusInternalServerError,
@@ -376,4 +381,31 @@ func UpdateCategory(c *gin.Context) {
 
 	category.ID = &oid
 	c.JSON(http.StatusCreated, category)
+}
+
+// DeleteCategory handles the DELETE request
+// of url path "/admin/categories/:id"
+func DeleteCategory(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	err := database.RemoveCategories(bson.M{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }

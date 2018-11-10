@@ -83,6 +83,7 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	r.POST("/categories", handler.PostCategory)
 	r.PUT("/categories/:id", handler.UpdateCategory)
 	r.PATCH("/categories/:id", handler.UpdateCategory)
+	r.DELETE("/categories/:id", handler.DeleteCategory)
 
 	// admin post
 	r.GET("/posts", handler.GetAdminPosts)
@@ -90,4 +91,5 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	r.POST("/posts", handler.PostPost)
 	r.PUT("/posts/:id", handler.UpdatePost)
 	r.PATCH("/posts/:id", handler.UpdatePost)
+	r.DELETE("/posts/:id", handler.DeletePost)
 }
