@@ -100,8 +100,8 @@ func GetPost(c *gin.Context) {
 	}
 
 	if len(posts) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
 			Message: "No post found",
 		})
 		return
@@ -287,8 +287,8 @@ func GetAdminPost(c *gin.Context) {
 	}
 
 	if len(posts) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
 			Message: "No post found",
 		})
 		return
@@ -669,8 +669,8 @@ func UpdatePost(c *gin.Context) {
 	}
 
 	if len(posts) < 1 {
-		c.JSON(http.StatusBadRequest, errRes{
-			Status:  http.StatusBadRequest,
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
 			Message: "No post found",
 		})
 		return
