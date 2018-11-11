@@ -73,6 +73,7 @@ func registerRoute(r *gin.Engine) {
 	// post
 	r.GET("/posts", handler.GetPosts)
 	r.GET("/posts/:id", handler.GetPost)
+	r.GET("/categories/:id/posts", handler.GetCategoryPosts)
 }
 
 // registerAdminRoute registers admin api route
@@ -88,6 +89,7 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	// admin post
 	r.GET("/posts", handler.GetAdminPosts)
 	r.GET("/posts/:id", handler.GetAdminPost)
+	r.GET("/categories/:id/posts", handler.GetAdminCategoryPosts)
 	r.POST("/posts", handler.PostPost)
 	r.PUT("/posts/:id", handler.UpdatePost)
 	r.PATCH("/posts/:id", handler.UpdatePost)

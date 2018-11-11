@@ -350,6 +350,162 @@ func GetAdminPost(c *gin.Context) {
 	c.JSON(http.StatusOK, posts[0])
 }
 
+// GetCategoryPosts handles the GET request of
+// url path "/categories/:id/posts"
+func GetCategoryPosts(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	categories, err := database.Categories(bson.M{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
+		})
+		return
+	}
+
+	categories[0].PostCount, err = database.PostCount(bson.M{
+		"category_id": oid,
+		"is_publish":  true,
+	})
+
+	posts, err := database.Posts(bson.M{
+		"category_id": oid,
+		"is_publish":  true,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	for i := range posts {
+		posts[i].Category = &categories[0]
+
+		if posts[i].UserID != nil {
+			// retrieve user
+			posts[i].User = new(structure.User)
+			*posts[i].User, _ = database.User(bson.M{
+				"_id": posts[i].UserID,
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+// GetAdminCategoryPosts handles the GET request of
+// url path "/admin/categories/:id/posts"
+func GetAdminCategoryPosts(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	// get user id
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	userID := bson.ObjectIdHex(idStr.(string))
+
+	categories, err := database.Categories(bson.M{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
+		})
+		return
+	}
+
+	categories[0].PostCount, err = database.PostCount(bson.M{
+		"$or": []bson.M{
+			bson.M{
+				"category_id": oid,
+				"is_publish":  true,
+			},
+			bson.M{
+				"category_id": oid,
+				"is_publish":  false,
+				"user_id":     userID,
+			},
+		},
+	})
+
+	posts, err := database.Posts(bson.M{
+		"$or": []bson.M{
+			bson.M{
+				"category_id": oid,
+				"is_publish":  true,
+			},
+			bson.M{
+				"category_id": oid,
+				"is_publish":  false,
+				"user_id":     userID,
+			},
+		},
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	for i := range posts {
+		posts[i].Category = &categories[0]
+
+		if posts[i].UserID != nil {
+			posts[i].User = new(structure.User)
+			*posts[i].User, _ = database.User(bson.M{
+				"_id": posts[i].UserID,
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
 // PostPost handles the POST request of url path "/admin/posts"
 func PostPost(c *gin.Context) {
 	post := new(structure.Post)
