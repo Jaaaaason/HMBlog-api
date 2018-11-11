@@ -609,6 +609,10 @@ func PostPost(c *gin.Context) {
 		}
 	}
 
+	// set id and CategoryName zero value to omit it
+	post.ID = nil
+	post.CategoryName = ""
+
 	post.CreatedAt = time.Now()
 	post.UpdatedAt = post.CreatedAt
 
@@ -627,6 +631,136 @@ func PostPost(c *gin.Context) {
 	post.User = new(structure.User)
 	*post.User, _ = database.User(bson.M{
 		"_id": post.UserID,
+	})
+
+	c.JSON(http.StatusCreated, post)
+}
+
+// PostCategoryPost handles the POST request of
+// url path "/admin/categories/:id/posts"
+func PostCategoryPost(c *gin.Context) {
+	// parse object id from url path
+	if !bson.IsObjectIdHex(c.Param("id")) {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Invaild id",
+		})
+		return
+	}
+	oid := bson.ObjectIdHex(c.Param("id"))
+
+	categories, err := database.Categories(bson.M{
+		"_id": oid,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(categories) < 1 {
+		c.JSON(http.StatusNotFound, errRes{
+			Status:  http.StatusNotFound,
+			Message: "No category found",
+		})
+		return
+	}
+
+	post := new(structure.Post)
+	if err := c.ShouldBindJSON(post); err != nil {
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Bad request",
+		})
+		return
+	}
+
+	// trim space
+	post.Title = strings.TrimSpace(post.Title)
+	if post.Title == "" {
+		// empty category name
+		c.JSON(http.StatusBadRequest, errRes{
+			Status:  http.StatusBadRequest,
+			Message: "Title shouldn't be just some whitespace",
+		})
+		return
+	}
+
+	posts, err := database.Posts(bson.M{
+		"title": post.Title,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+	}
+
+	if len(posts) > 0 {
+		// post title exists
+		c.JSON(http.StatusConflict, errRes{
+			Status:  http.StatusConflict,
+			Message: "Post with this title already exists",
+		})
+		return
+	}
+
+	// set category id
+	post.CategoryID = &oid
+
+	// get user id
+	idStr, ok := c.Get("user_id")
+	if !ok || !bson.IsObjectIdHex(idStr.(string)) {
+		c.JSON(http.StatusUnauthorized, errRes{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid JWT token",
+		})
+		return
+	}
+	post.UserID = new(bson.ObjectId)
+	*post.UserID = bson.ObjectIdHex(idStr.(string))
+
+	// set id and CategoryName zero value to omit it
+	post.ID = nil
+	post.CategoryName = ""
+
+	post.CreatedAt = time.Now()
+	post.UpdatedAt = post.CreatedAt
+
+	err = database.InsertPost(post)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, errRes{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal server error",
+		})
+		return
+
+		// TODO: delete category if it is just created
+	}
+
+	// retrieve user
+	post.User = new(structure.User)
+	*post.User, _ = database.User(bson.M{
+		"_id": post.UserID,
+	})
+
+	// retrieve category
+	post.Category = &categories[0]
+	post.Category.PostCount, _ = database.PostCount(bson.M{
+		"$or": []bson.M{
+			bson.M{
+				"category_id": oid,
+				"is_publish":  true,
+			},
+			bson.M{
+				"category_id": oid,
+				"is_publish":  false,
+				"user_id":     post.UserID,
+			},
+		},
 	})
 
 	c.JSON(http.StatusCreated, post)

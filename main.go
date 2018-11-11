@@ -90,6 +90,7 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	r.GET("/posts", handler.GetAdminPosts)
 	r.GET("/posts/:id", handler.GetAdminPost)
 	r.GET("/categories/:id/posts", handler.GetAdminCategoryPosts)
+	r.POST("/categories/:id/posts", handler.PostCategoryPost)
 	r.POST("/posts", handler.PostPost)
 	r.PUT("/posts/:id", handler.UpdatePost)
 	r.PATCH("/posts/:id", handler.UpdatePost)
