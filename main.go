@@ -43,7 +43,9 @@ func main() {
 	}
 	defer database.CloseSession()
 
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+	r.Use(handler.CORSMiddleware())
 	registerRoute(r)
 
 	adminRouter := r.Group("/admin")
