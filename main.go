@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,21 +26,28 @@ func main() {
 	}
 
 	if err != nil {
-		logger.Fatal(err.Error())
+		fmt.Println("Can not initializes configuration")
+		return
 	}
 
+	logFile := os.Stdout
 	// desire log file is given
 	if configer.Config.LogFile != "" {
-		err = logger.SetOutputFile(configer.Config.LogFile)
+		logFile, err = os.OpenFile(configer.Config.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			logger.Fatal(err.Error())
+			fmt.Println("Can not initializes log")
+			return
 		}
 	}
+	defer logFile.Close()
+
+	logger.Initialize(logFile)
 
 	// initialize the database's connection
 	err = database.Initialize()
 	if err != nil {
 		logger.Fatal(err.Error())
+		return
 	}
 	defer database.CloseSession()
 
