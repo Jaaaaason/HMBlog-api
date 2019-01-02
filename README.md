@@ -25,7 +25,7 @@ PUT    | /admin/posts/:id            | 以后台用户身份修改某个博文
 PATCH  | /admin/posts/:id            | 以后台用户身份修改某个博文
 DELETE | /admin/posts/:id            | 以后台用户身份删除某个博文
 
-详细的 api 文档请移步 [HMBlog Api Doc](https://app.swaggerhub.com/apis-docs/Jaaaaason/hmblog/1.0.0)
+详细的 api 文档请移步 [HMBlog Api Doc](http://doc.holdmybeer.space/hmblog)
 
 #### 坏境依赖
 `Golang 1.11 or above （低版本未测试）`<br />
