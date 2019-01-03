@@ -24,6 +24,9 @@ GET    | /admin/posts/:id            | 以后台用户身份获取某个博文
 PUT    | /admin/posts/:id            | 以后台用户身份修改某个博文
 PATCH  | /admin/posts/:id            | 以后台用户身份修改某个博文
 DELETE | /admin/posts/:id            | 以后台用户身份删除某个博文
+PUT    | /admin/users/:id            | 后台用户修改信息
+PATCH  | /admin/users/:id            | 后台用户修改信息
+PUT    | /admin/users/:id/password   | 后台用户修改密码
 
 详细的 api 文档请移步 [HMBlog Api Doc](http://doc.holdmybeer.space/hmblog)
 
