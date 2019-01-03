@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,7 @@ import (
 const (
 	jwtSignKey = "secret"
 	tokenType  = "bearer"
-	tokenExp   = 86400 // 1 Day, 86400 second
+	tokenExp   = 86400 // 1 Day, 86400 seconds
 )
 
 // JWTMiddleware the middleware for verifying jwt token
@@ -28,7 +29,17 @@ func JWTMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.Parse(tokenString,
+		tokenStrs := strings.Split(tokenString, " ")
+		if len(tokenStrs) != 2 || tokenStrs[0] != "Bearer" {
+			c.JSON(http.StatusUnauthorized, errRes{
+				Status:  http.StatusUnauthorized,
+				Message: "Invalid jwt token",
+			})
+			c.Abort()
+			return
+		}
+
+		token, err := jwt.Parse(tokenStrs[1],
 			func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, errors.New("Can't parse JWT token")
@@ -45,9 +56,9 @@ func JWTMiddleware() gin.HandlerFunc {
 					Message: "JWT token is expired",
 				})
 			} else {
-				c.JSON(http.StatusInternalServerError, errRes{
-					Status:  http.StatusInternalServerError,
-					Message: "Internal server error",
+				c.JSON(http.StatusUnauthorized, errRes{
+					Status:  http.StatusUnauthorized,
+					Message: "Invalid jwt token",
 				})
 			}
 
