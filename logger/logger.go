@@ -3,8 +3,6 @@ package logger
 import (
 	"log"
 	"os"
-
-	"github.com/jaaaaason/hmblog/configer"
 )
 
 var (
@@ -14,27 +12,12 @@ var (
 	fatalLog *log.Logger
 )
 
-func init() {
-	infoLog = log.New(os.Stdout, "[Info] ", log.Ldate|log.Ltime)
-	warnLog = log.New(os.Stdout, "[Warn] ", log.Ldate|log.Ltime)
-	errLog = log.New(os.Stdout, "[Error] ", log.Ldate|log.Ltime)
-	fatalLog = log.New(os.Stdout, "[Fatal] ", log.Ldate|log.Ltime)
-}
-
-// SetOutputFile sets the destination file of log's output
-func SetOutputFile(filepath string) error {
-	file, err := os.OpenFile(configer.Config.LogFile, os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	infoLog.SetOutput(file)
-	warnLog.SetOutput(file)
-	errLog.SetOutput(file)
-	fatalLog.SetOutput(file)
-
-	return nil
+// Initialize initializes the package logger
+func Initialize(file *os.File) {
+	infoLog = log.New(file, "[Info] ", log.Ldate|log.Ltime)
+	warnLog = log.New(file, "[Warn] ", log.Ldate|log.Ltime)
+	errLog = log.New(file, "[Error] ", log.Ldate|log.Ltime)
+	fatalLog = log.New(file, "[Fatal] ", log.Ldate|log.Ltime)
 }
 
 // Info prints the info log with given string

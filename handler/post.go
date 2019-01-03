@@ -964,7 +964,7 @@ func UpdatePost(c *gin.Context) {
 		return
 	}
 
-	err = database.UpdatePosts(
+	err = database.UpdatePost(
 		bson.M{
 			"_id": oid,
 		},
