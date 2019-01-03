@@ -53,15 +53,17 @@ func InsertCategory(category *structure.Category) error {
 	return c.Insert(category)
 }
 
-// UpdateCategories updates all categories that matches the filter,
+// UpdateCategory updates a category that matches the filter,
 // ErrNoCategory returned when destination category doesn't exist
-func UpdateCategories(filter bson.M, category structure.Category) error {
+func UpdateCategory(filter bson.M, category structure.Category) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 
+	// set safe mode to return ErrNotFound if a document isn't found
+	session.SetSafe(&mgo.Safe{})
 	c := session.DB(dbName).C("categories")
 
-	_, err := c.UpdateAll(
+	err := c.Update(
 		filter,
 		bson.M{
 			"$set": category,

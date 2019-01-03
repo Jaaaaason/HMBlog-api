@@ -304,7 +304,8 @@ func UpdateCategory(c *gin.Context) {
 		// for PUT request, use a new category struct,
 		// binding with the request body, so the category
 		// will be exactly the same as request body,
-		// the value of some field that doesn't will be empty
+		// the value of some field that doesn't provide
+		// will be the zero value
 		category = structure.Category{}
 		err = c.ShouldBindJSON(&category)
 		if err != nil {
@@ -332,7 +333,7 @@ func UpdateCategory(c *gin.Context) {
 		}
 	}
 
-	// set field ID empty value to omit it
+	// set field ID zero value to omit it
 	category.ID = nil
 
 	// trim space
@@ -365,7 +366,7 @@ func UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	err = database.UpdateCategories(
+	err = database.UpdateCategory(
 		bson.M{
 			"_id": oid,
 		},

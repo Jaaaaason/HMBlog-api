@@ -49,14 +49,17 @@ func InsertPost(post *structure.Post) error {
 // ErrNoPost returned when no category found
 var ErrNoPost = errors.New("no such post")
 
-// UpdatePosts updates all posts that matches the filter
-func UpdatePosts(filter bson.M, post structure.Post) error {
+// UpdatePost updates a post that matches the filter,
+// ErrNoPost returned when destination post doesn't exist
+func UpdatePost(filter bson.M, post structure.Post) error {
 	session := mgoSession.Copy()
 	defer session.Close()
 
+	// set safe mode to return ErrNotFound if a document isn't found
+	session.SetSafe(&mgo.Safe{})
 	c := session.DB(dbName).C("posts")
 
-	_, err := c.UpdateAll(
+	err := c.Update(
 		filter,
 		bson.M{
 			"$set": post,
