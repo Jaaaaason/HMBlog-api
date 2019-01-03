@@ -69,6 +69,20 @@ func randomPassword() []byte {
 // ErrNoUser returned when no user found
 var ErrNoUser = errors.New("no such user")
 
+// Users returns all users which match the filter
+func Users(filter bson.M) ([]structure.User, error) {
+	var users []structure.User
+
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	c := session.DB(dbName).C("users")
+
+	err := c.Find(filter).All(&users)
+
+	return users, err
+}
+
 // User returns one user that match the filter
 func User(filter bson.M) (structure.User, error) {
 	var user structure.User
@@ -84,4 +98,27 @@ func User(filter bson.M) (structure.User, error) {
 	}
 
 	return user, err
+}
+
+// UpdateUser updates a user that matches the filter,
+// ErrNoUser returned when destination user doesn't exist
+func UpdateUser(filter bson.M, user structure.User) error {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	// set safe mode to return ErrNotFound if a document isn't found
+	session.SetSafe(&mgo.Safe{})
+	c := session.DB(dbName).C("users")
+
+	err := c.Update(
+		filter,
+		bson.M{
+			"$set": user,
+		},
+	)
+	if err != nil && err == mgo.ErrNotFound {
+		return ErrNoUser
+	}
+
+	return err
 }

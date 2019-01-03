@@ -105,4 +105,9 @@ func registerAdminRoute(r *gin.RouterGroup) {
 	r.PUT("/posts/:id", handler.UpdatePost)
 	r.PATCH("/posts/:id", handler.UpdatePost)
 	r.DELETE("/posts/:id", handler.DeletePost)
+
+	// admin user
+	r.PUT("/users/:id", handler.UpdateUser)
+	r.PATCH("/users/:id", handler.UpdateUser)
+	r.PUT("/users/:id/password", handler.UpdateUserPassword)
 }
